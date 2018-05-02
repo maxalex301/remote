@@ -15,22 +15,29 @@ class Server:
         self.host = host
         self.port = port
 
+    def __host_str(self):
+        return self.user + '@' + self.host
+
+    def __port_str(self):
+        if self.port == 22:
+            return ''
+        return ' -p '+str(self.port)
+
     def remote_dir(self, dir):
-        return '{user}@{host}:{dir}'.format(user=self.user, host=self.host, dir=dir)
+        return '{host}:{dir}'.format(host=self.__host_str(), dir=dir)
 
     def sync(self, source, dest, exclude):
         cmd = (
             'rsync -trvlH'
-            ' -e "ssh -p {port}"'
+            ' -e "ssh{port}"'
             ' {exclude}'
             ' --delete'
             ' {src}/ {dst}').format(
-                port=self.port,
+                port=self.__port_str(),
                 src=source,
                 dst=dest,
                 exclude=reduce(lambda x, y: x + ' --exclude {}'.format(y), exclude, '')
                 )
-        print cmd
         subprocess.check_call(cmd, shell=True)
 
     def upload(self, src, dest, exclude):
@@ -47,8 +54,8 @@ class Server:
         self.cmd('rm -rf ' + path)
 
     def get_command(self, cmd):
-        return 'ssh -A -q -p {port} {user}@{host} "{cmd}"'.format(
-            port=self.port, user=self.user, host=self.host, cmd=cmd)
+        return 'ssh -Aq{port} {host} "{cmd}"'.format(
+            port=self.__port_str(), host=self.__host_str(), cmd=cmd)
 
     def replace_file_content(self, file, src, dest):
         self.cmd("sed -i.bak -e 's#{src}#{dest}#' {file}".format(src=src, dest=dest, file=file))

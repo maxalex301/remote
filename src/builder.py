@@ -83,18 +83,18 @@ class RemoteBuilder:
         raise RuntimeError('argv: '+str(self.argv))
 
     def clion_toolset_check(self, path):
-        dest_dir = '/tmp/clion-toolset-check'
+        dest_dir = os.path.join(self.config.REMOTE_DIR, 'clion-toolset-check')
         dest_cwd = os.path.join(dest_dir, '_build')
-        self.argv[-1]=dest_dir
+        self.argv[-1] = dest_dir
         self.server.upload(path, dest_dir, [])
         self.server.cmd_in_wd(dest_cwd, ' '.join(escape(self.argv)))
-        cmake_cache_file = os.path.join(dest_cwd, "_build");
+        cmake_cache_file = os.path.join(dest_cwd, "CMakeCache.txt");
         self.server.replace_file_content(cmake_cache_file, '='+path, '='+dest_dir)
         self.server.replace_file_content(cmake_cache_file,
                                          'CMAKE_MAKE_PROGRAM:FILEPATH=.*',
                                          'CMAKE_MAKE_PROGRAM:FILEPATH='+self.config.MAKE)
         self.server.replace_file_content(cmake_cache_file,
-                                         'CMAKE_C_COMPILER:FILEPATH=.*',
+                                         'CMAKE_C_COMPILER:FILEPATH=s.*',
                                          'CMAKE_C_COMPILER:FILEPATH='+self.config.CC)
         self.server.replace_file_content(cmake_cache_file,
                                          'CMAKE_CXX_COMPILER:FILEPATH=.*',
