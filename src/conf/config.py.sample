@@ -1,0 +1,38 @@
+#Path to conan directory
+CONANHOME='~'
+
+#Exclude directories for upload
+EXCLUDES=['.git', '.idea', '.gitignore', 'msw']
+
+#CLion build directory, example: 'cmake-build-debug'
+BUILD_DIR='cmake-build-debug'
+
+#Server build directory
+REMOTE_DIR='/tmp/build'
+
+#Server conan command
+CONAN='/usr/bin/conan'
+
+#Server cmake command. Must be exists on local machine too!!!
+CMAKE='/usr/bin/cmake'
+
+#Server make command. Must be exists on local machine too!!!
+MAKE='/usr/bin/make'
+
+#Server C compiler. Must be exists on local machine too!!!
+CC='/usr/bin/gcc'
+
+#Server C++ compiler. Must be exists on local machine too!!!
+CXX='/usr/bin/g++'
+
+#Server Fortran compiler. Uncomment if need it
+#FC='/usr/bin/gfortran'
+
+#SSH user
+#BUILD_USER='root'
+
+#Server address
+BUILD_HOST='127.0.0.1'
+
+#Server ssh-port. Uncomment if not standart
+#BUILD_PORT=22

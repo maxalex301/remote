@@ -1,0 +1,69 @@
+import subprocess
+
+def escape(args):
+    result = []
+    for a in args:
+        if ' ' in a:
+            result.append("'{}'".format(a))
+        else:
+            result.append(a)
+    return result
+
+class Server:
+    def __init__(self, host, port, user):
+        self.user = user
+        self.host = host
+        self.port = port
+
+    def remote_dir(self, dir):
+        return '{user}@{host}:{dir}'.format(user=self.user, host=self.host, dir=dir)
+
+    def sync(self, source, dest, exclude):
+        cmd = (
+            'rsync -trvlH'
+            ' -e "ssh -p {port}"'
+            ' {exclude}'
+            ' --delete'
+            ' {src}/ {dst}').format(
+                port=self.port,
+                src=source,
+                dst=dest,
+                exclude=reduce(lambda x, y: x + ' --exclude {}'.format(y), exclude, '')
+                )
+        print cmd
+        subprocess.check_call(cmd, shell=True)
+
+    def upload(self, src, dest, exclude):
+        self.mkdir(dest)
+        self.sync(src, self.remote_dir(dest), exclude)
+
+    def download(self, src, dest, exclude):
+        self.sync(self.remote_dir(src), dest, exclude)
+
+    def mkdir(self, path):
+        self.cmd('mkdir -p ' + path)
+
+    def rm(self, path):
+        self.cmd('rm -rf ' + path)
+
+    def get_command(self, cmd):
+        return 'ssh -A -q -p {port} {user}@{host} "{cmd}"'.format(
+            port=self.port, user=self.user, host=self.host, cmd=cmd)
+
+    def replace_file_content(self, file, src, dest):
+        self.cmd("sed -i.bak -e 's#{src}#{dest}#' {file}".format(src=src, dest=dest, file=file))
+
+    def home(self):
+        return subprocess.check_output(self.get_command('''echo \$HOME'''), shell=True).strip()
+
+    def cmd(self, command):
+        try:
+            subprocess.check_call(self.get_command(command), shell=True)
+        except subprocess.CalledProcessError as e:
+            return e.returncode
+        return 0
+
+    def cmd_in_wd(self, wd, command):
+        return self.cmd('cd {wd}; {cmd}'.format(wd=wd, cmd=command))
+
+
