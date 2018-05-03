@@ -110,9 +110,6 @@ class RemoteBuilder:
             self.clion_toolset_check(self.argv[-1])
             return
         elif not self.__is_project_dir():
-            self.no_build_execute()
-            return
-        else:
             return
 
         [base, self.project] = self.extract_dir_and_project()
