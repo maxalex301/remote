@@ -28,8 +28,8 @@ class RemoteBuilder:
         else:
             raise RuntimeError('Wrong command!!! Must be "conan", "cmake" or "make"')
 
-    def check_current_directory(self):
-        return os.getcwd().startswith(os.getenv("HOME"))
+    def __is_project_dir(self):
+        return os.getcwd().startswith(self.config.PROJECTS_DIR)
 
     def set_compiler_args(self):
         self.argv.insert(0, 'CC=' + self.config.CC)
@@ -63,9 +63,9 @@ class RemoteBuilder:
 
     def before_run(self):
         if self.command == 'conan':
-            self.local.conan_dir = self.config.CONANHOME
-            self.remote.conan_dir = self.config.REMOTE_DIR
-            self.argv.insert(0, 'HOME=' + self.remote.conan_dir)
+            self.local.conan_dir = os.path.join(self.config.CONANHOME, '.conan')
+            self.remote.conan_dir = os.path.join(self.config.REMOTE_DIR, '.conan')
+            self.argv.insert(0, 'HOME=' + self.config.CONANHOME)
         elif self.command == 'cmake':
             if (self.argv[-1] == self.local.project_dir):
                 self.argv[-1] = self.remote.project_dir
@@ -80,13 +80,13 @@ class RemoteBuilder:
 
     def tools_version_check(self):
         self.server.cmd(' '.join(escape(self.argv)))
-        raise RuntimeError('argv: '+str(self.argv))
 
     def clion_toolset_check(self, path):
         dest_dir = os.path.join(self.config.REMOTE_DIR, 'clion-toolset-check')
         dest_cwd = os.path.join(dest_dir, '_build')
         self.argv[-1] = dest_dir
         self.server.upload(path, dest_dir, [])
+        self.set_compiler_args()
         self.server.cmd_in_wd(dest_cwd, ' '.join(escape(self.argv)))
         cmake_cache_file = os.path.join(dest_cwd, "CMakeCache.txt");
         self.server.replace_file_content(cmake_cache_file, '='+path, '='+dest_dir)
@@ -102,15 +102,17 @@ class RemoteBuilder:
         self.server.download(dest_dir, path, [])
         self.server.rm(dest_dir)
 
-    def no_build_execute(self):
-        if self.argv[1] == '-version':
-            self.tools_version_check()
-        elif self.argv[-1].startswith('/private/'):
-            self.clion_toolset_check(self.argv[-1])
-
     def execute(self):
-        if not self.check_current_directory():
+        if '-version' in self.argv:
+            self.tools_version_check()
+            return
+        elif self.argv[-1].startswith('/private/') or self.argv[-1].startswith('/tmp'):
+            self.clion_toolset_check(self.argv[-1])
+            return
+        elif not self.__is_project_dir():
             self.no_build_execute()
+            return
+        else:
             return
 
         [base, self.project] = self.extract_dir_and_project()

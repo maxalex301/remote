@@ -1,4 +1,5 @@
 import subprocess
+from functools import reduce
 
 def escape(args):
     result = []
