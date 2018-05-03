@@ -1,7 +1,8 @@
-# remote
+# toolchains
 Toolchains for building on remote machine from CLion
 
 Install steps:
+
 0. Clone repo to local machine
 
 1. cd </your/cloned/path>
