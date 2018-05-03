@@ -2,10 +2,7 @@
 CONANHOME='~'
 
 #Exclude directories for upload
-EXCLUDES=['.git', '.idea', '.gitignore', 'msw']
-
-#CLion build directory, example: 'cmake-build-debug'
-BUILD_DIR='cmake-build-debug'
+EXCLUDES=['.git', '.idea', '.gitignore', 'msw', '_build', 'cmake-build-debug', 'cmake-build-release']
 
 #Server build directory
 REMOTE_DIR='/tmp/build'
