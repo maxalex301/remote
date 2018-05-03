@@ -5,5 +5,5 @@ import sys
 import os
 
 if __name__ == '__main__':
-    builder = RemoteBuilder(config)
+    builder = RemoteBuilder(os.getcwd(), config)
     builder.execute()
