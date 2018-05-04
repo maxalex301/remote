@@ -62,7 +62,7 @@ class Server:
         self.cmd("sed -i -e 's#{src}#{dest}#' {file}".format(src=src, dest=dest, file=file))
 
     def home(self):
-        return subprocess.check_output(self.get_command('''echo \$HOME'''), shell=True).strip()
+        return str(subprocess.check_output(self.get_command('''echo \$HOME'''), shell=True).strip())
 
     def cmd(self, command):
         try:
