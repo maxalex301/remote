@@ -98,7 +98,11 @@ class RemoteBuilder:
         return self.argv[-1].startswith('/private/') or self.argv[-1].startswith('/tmp/')
 
     def make_configurations(self):
-        self.local = BuildEnv(os.path.abspath(self.argv[-1]),
+        src_dir = self.argv[-1]
+        if self.__is_conan():
+            src_dir = self.argv[2]
+
+        self.local = BuildEnv(os.path.abspath(src_dir),
                               os.getcwd(),
                               os.path.join(self.config.CONANHOME, '.conan'))
 
@@ -114,7 +118,7 @@ class RemoteBuilder:
         self.make_configurations()
 
         if self.__is_conan() and not os.path.exists(self.local.conanfile):
-            raise RuntimeError("conanfile.txt does not exists in source directory")
+            raise RuntimeError("conanfile.py does not exists in source directory")
         elif self.__is_cmake() and not os.path.exists(self.local.cmake_lists):
             raise RuntimeError("CMakeLists.txt does not exists in source directory")
 
