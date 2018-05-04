@@ -85,7 +85,7 @@ class RemoteBuilder:
                                                  'CMAKE_MAKE_PROGRAM:FILEPATH=.*',
                                                  'CMAKE_MAKE_PROGRAM:FILEPATH=' + self.config.MAKE)
                 self.server.replace_file_content(self.remote.cmake_cache,
-                                                 'CMAKE_C_COMPILER:FILEPATH=s.*',
+                                                 'CMAKE_C_COMPILER:FILEPATH=.*',
                                                  'CMAKE_C_COMPILER:FILEPATH=' + self.config.CC)
                 self.server.replace_file_content(self.remote.cmake_cache,
                                                  'CMAKE_CXX_COMPILER:FILEPATH=.*',
@@ -102,8 +102,8 @@ class RemoteBuilder:
                               os.getcwd(),
                               os.path.join(self.config.CONANHOME, '.conan'))
 
-        self.remote = BuildEnv(self.config.REMOTE_DIR + self.local.source_dir,
-                               self.config.REMOTE_DIR + self.local.build_dir,
+        self.remote = BuildEnv(os.path.join(self.config.REMOTE_DIR, self.local.source_dir),
+                               os.path.join(self.config.REMOTE_DIR, self.local.build_dir),
                                os.path.join(self.config.REMOTE_DIR, '.conan'))
 
     def execute(self):
