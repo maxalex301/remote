@@ -129,6 +129,10 @@ class RemoteBuilder:
         if self.__is_version_check():
             self.server.cmd(' '.join(escape(self.argv)))
             return
+        elif self.__is_conan() and not 'install' in self.argv:
+            self.server.cmd(' '.join(escape(self.argv)))
+            return
+
 
         self.make_configurations()
 
