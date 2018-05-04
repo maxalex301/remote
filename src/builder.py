@@ -68,7 +68,7 @@ class RemoteBuilder:
 
     def before_run(self):
         if self.__is_conan():
-            self.argv.insert(0, 'HOME=' + self.config.REMOTE_DIR)
+            self.argv.insert(0, 'HOME=' + os.path.dirname(self.remote.conan_dir))
         elif self.__is_cmake():
             self.argv[-1] = self.remote.source_dir
 
@@ -113,7 +113,7 @@ class RemoteBuilder:
 
         remote_conan = os.path.join(self.config.REMOTE_DIR, '.conan')
         if self.config.REMOTE_DIR == '' or self.config.REMOTE_DIR == '/':
-            remote_conan = os.path.join(self.server.home(), '.conan')
+            remote_conan = os.path.abspath('/tmp/.conan')
 
         self.remote = BuildEnv(os.path.join(self.config.REMOTE_DIR, self.local.source_dir),
                                os.path.join(self.config.REMOTE_DIR, self.local.build_dir),

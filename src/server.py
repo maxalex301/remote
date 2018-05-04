@@ -1,4 +1,5 @@
 import subprocess
+import os
 from functools import reduce
 
 def escape(args):
@@ -62,7 +63,7 @@ class Server:
         self.cmd("sed -i -e 's#{src}#{dest}#' {file}".format(src=src, dest=dest, file=file))
 
     def home(self):
-        return str(subprocess.check_output(self.get_command('''echo \$HOME'''), shell=True).strip())
+        return subprocess.check_output(self.get_command('''echo \$HOME'''), shell=True).strip()
 
     def cmd(self, command):
         try:
