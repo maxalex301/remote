@@ -10,7 +10,7 @@ class BuildEnv:
         self.project = os.path.basename(self.source_dir)
         self.cmake_lists = os.path.join(self.source_dir, 'CMakeLists.txt')
         self.cmake_cache = os.path.join(self.build_dir, 'CMakeCache.txt')
-        self.conanfile = os.path.join(self.source_dir, 'conanfile.txt')
+        self.conanfile = os.path.join(self.source_dir, 'conanfile.py')
 
 
 class RemoteBuilder:
