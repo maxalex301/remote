@@ -15,6 +15,7 @@ class BuildEnv:
 
 class RemoteBuilder:
     def __init__(self, config):
+        self.__need_upload = True
         self.config = config
         self.server = Server(self.config.BUILD_HOST,
                              self.config.BUILD_PORT,
@@ -104,6 +105,7 @@ class RemoteBuilder:
         src_dir = self.argv[-1]
         if self.__is_cmake() and self.argv[1] == '--build':
             src_dir = os.path.dirname(os.path.abspath(self.argv[2]))
+            self.__need_upload = False
         elif self.__is_conan():
             src_dir = self.argv[2]
 
@@ -113,7 +115,7 @@ class RemoteBuilder:
 
         remote_conan = os.path.join(self.config.REMOTE_DIR, '.conan')
         if self.config.REMOTE_DIR == '' or self.config.REMOTE_DIR == '/':
-            remote_conan = os.path.abspath('/tmp/.conan')
+            remote_conan = self.local.conan_dir #os.path.abspath('/'+self.config.BUILD_USER+'/.conan')
 
         self.remote = BuildEnv(os.path.join(self.config.REMOTE_DIR, self.local.source_dir),
                                os.path.join(self.config.REMOTE_DIR, self.local.build_dir),
@@ -142,7 +144,9 @@ class RemoteBuilder:
             raise RuntimeError("CMakeLists.txt does not exists in source directory " + self.local.cmake_lists)
 
         self.create_remote_directories()
-        self.upload_project()
+
+        if self.__need_upload:
+            self.upload_project()
 
         self.set_compiler_args()
 
