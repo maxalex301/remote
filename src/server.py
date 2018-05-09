@@ -62,8 +62,8 @@ class Server:
     def replace_file_content(self, file, src, dest):
         self.cmd("sed -i -e 's#{src}#{dest}#' {file}".format(src=src, dest=dest, file=file))
 
-    def home(self):
-        return subprocess.check_output(self.get_command('''echo \$HOME'''), shell=True).strip()
+    def getenv(self, var):
+        return subprocess.check_output(self.get_command('echo \$'+var), shell=True).strip()
 
     def cmd(self, command):
         try:

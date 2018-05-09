@@ -1,6 +1,3 @@
-#Path to conan directory
-CONANHOME='~'
-
 #Exclude directories for upload
 EXCLUDES=['.git', '.idea', '.gitignore', 'msw', '_build', 'cmake-build-debug', 'cmake-build-release']
 

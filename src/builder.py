@@ -11,11 +11,12 @@ class BuildEnv:
         self.cmake_lists = os.path.join(self.source_dir, 'CMakeLists.txt')
         self.cmake_cache = os.path.join(self.build_dir, 'CMakeCache.txt')
         self.conanfile = os.path.join(self.source_dir, 'conanfile.py')
-
+        self.project_cbp = os.path.join(self.build_dir, self.project+'.cbp')
 
 class RemoteBuilder:
     def __init__(self, config):
         self.__need_upload = True
+        self.__need_download = True
         self.config = config
         self.server = Server(self.config.BUILD_HOST,
                              self.config.BUILD_PORT,
@@ -40,6 +41,9 @@ class RemoteBuilder:
     def __is_cmake(self):
         return self.command == 'cmake'
 
+    def __is_cmake_build(self):
+        return self.__is_cmake() and '--build' in self.argv
+
     def __is_make(self):
         return self.command == 'make'
 
@@ -58,6 +62,11 @@ class RemoteBuilder:
             self.server.mkdir(self.remote.build_dir)
 
     def upload_project(self):
+        if not self.__need_upload:
+            return
+
+        self.create_remote_directories()
+
         excludes = self.config.EXCLUDES
         if os.path.exists(self.local.build_dir):
             excludes.append(os.path.basename(self.local.build_dir))
@@ -68,32 +77,33 @@ class RemoteBuilder:
             self.server.download(self.remote.build_dir, self.local.build_dir, ['.ssh'])
 
     def before_run(self):
-        if self.__is_conan():
-            self.argv.insert(0, 'HOME=' + os.path.dirname(self.remote.conan_dir))
-        elif self.__is_cmake():
+        if self.__is_cmake():
             self.argv[-1] = self.remote.source_dir
 
     def run(self):
         return self.server.cmd_in_wd(self.remote.build_dir, ' '.join(escape(self.argv)))
 
-    def after_run(self):
-        if self.__is_cmake():
-            self.server.replace_file_content(self.remote.cmake_cache,
-                                             '=' + self.remote.source_dir,
-                                             '=' + self.local.source_dir)
-            if self.__is_toolset_check():
-                self.server.replace_file_content(self.remote.cmake_cache,
-                                                 'CMAKE_MAKE_PROGRAM:FILEPATH=.*',
-                                                 'CMAKE_MAKE_PROGRAM:FILEPATH=' + self.config.MAKE)
-                self.server.replace_file_content(self.remote.cmake_cache,
-                                                 'CMAKE_C_COMPILER:FILEPATH=.*',
-                                                 'CMAKE_C_COMPILER:FILEPATH=' + self.config.CC)
-                self.server.replace_file_content(self.remote.cmake_cache,
-                                                 'CMAKE_CXX_COMPILER:FILEPATH=.*',
-                                                 'CMAKE_CXX_COMPILER:FILEPATH=' + self.config.CXX)
+    def replace_cache_variable_to(self, var, dst):
+        self.server.replace_file_content(self.remote.cmake_cache, var + '=.*', var + '=' + dst)
 
-        # if self.__is_conan() and 'info' not in self.argv:
-        #     self.server.download(self.remote.conan_dir, self.local.conan_dir, [])
+    def modify_cmake_cache(self):
+        self.replace_cache_variable_to('CMAKE_MAKE_PROGRAM:FILEPATH', self.config.MAKE)
+        self.replace_cache_variable_to('CMAKE_C_COMPILER:FILEPATH', self.config.CC)
+        self.replace_cache_variable_to('CMAKE_CXX_COMPILER:FILEPATH', self.config.CXX)
+
+    def replace_file_variables(self, file):
+        self.server.replace_file_content(file,
+                                         '=' + self.remote.source_dir,
+                                         '=' + self.local.source_dir)
+
+    def after_run(self):
+        if not self.__need_download:
+            return
+
+        if self.__is_cmake():
+            self.replace_file_variables(self.remote.cmake_cache)
+            if self.__is_toolset_check():
+                self.modify_cmake_cache()
 
     def __is_toolset_check(self):
         return self.argv[-1].startswith('/private/') or self.argv[-1].startswith('/tmp/')
@@ -101,9 +111,21 @@ class RemoteBuilder:
     def __is_version_check(self):
         return '-version' in self.argv or '--version' in self.argv or '-v' in self.argv
 
+    def get_conan_home(self):
+        conan_home = os.environ['CONAN_USER_HOME']
+        if conan_home is None:
+            return os.environ['HOME']
+        return conan_home
+
+    def get_remote_conan_home(self):
+        conan_home = self.server.getenv('CONAN_USER_HOME')
+        if conan_home is None:
+            return self.server.getenv('HOME')
+        return conan_home
+
     def make_configurations(self):
         src_dir = self.argv[-1]
-        if self.__is_cmake() and self.argv[1] == '--build':
+        if self.__is_cmake_build():
             src_dir = os.path.dirname(os.path.abspath(self.argv[2]))
             self.__need_upload = False
         elif self.__is_conan():
@@ -111,15 +133,11 @@ class RemoteBuilder:
 
         self.local = BuildEnv(os.path.abspath(src_dir),
                               os.getcwd(),
-                              os.path.join(self.config.CONANHOME, '.conan'))
-
-        remote_conan = os.path.join(self.config.REMOTE_DIR, '.conan')
-        if self.config.REMOTE_DIR == '' or self.config.REMOTE_DIR == '/':
-            remote_conan = self.local.conan_dir #os.path.abspath('/'+self.config.BUILD_USER+'/.conan')
+                              os.path.join(self.get_conan_home(), '.conan'))
 
         self.remote = BuildEnv(os.path.join(self.config.REMOTE_DIR, self.local.source_dir),
                                os.path.join(self.config.REMOTE_DIR, self.local.build_dir),
-                               remote_conan)
+                               os.path.join(self.get_remote_conan_home(), '.conan'))
 
     def execute(self):
         # Check cwd
@@ -135,7 +153,6 @@ class RemoteBuilder:
             self.server.cmd(' '.join(escape(self.argv)))
             return
 
-
         self.make_configurations()
 
         if self.__is_conan() and not os.path.exists(self.local.conanfile):
@@ -143,10 +160,7 @@ class RemoteBuilder:
         elif self.__is_cmake() and not os.path.exists(self.local.cmake_lists):
             raise RuntimeError("CMakeLists.txt does not exists in source directory " + self.local.cmake_lists)
 
-        self.create_remote_directories()
-
-        if self.__need_upload:
-            self.upload_project()
+        self.upload_project()
 
         self.set_compiler_args()
 
