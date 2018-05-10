@@ -112,15 +112,16 @@ class RemoteBuilder:
         return '-version' in self.argv or '--version' in self.argv or '-v' in self.argv
 
     def get_conan_home(self):
-        conan_home = os.environ['CONAN_USER_HOME']
-        if conan_home is None:
+        try:
+            return os.environ['CONAN_USER_HOME']
+        except:
             return os.environ['HOME']
-        return conan_home
+        # return conan_home
 
     def get_remote_conan_home(self):
-        conan_home = self.server.getenv('CONAN_USER_HOME')
-        if conan_home is None:
-            return self.server.getenv('HOME')
+        conan_home = self.server.getenv('CONAN_USER_HOME').decode("utf-8")
+        if not conan_home or conan_home is None:
+            return self.server.getenv('HOME').decode("utf-8")
         return conan_home
 
     def make_configurations(self):
