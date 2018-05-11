@@ -40,6 +40,7 @@ class Server:
                 dst=dest,
                 exclude=reduce(lambda x, y: x + ' --exclude {}'.format(y), exclude, '')
                 )
+        print(cmd)
         subprocess.check_call(cmd, shell=True)
 
     def upload(self, src, dest, exclude):
@@ -67,6 +68,7 @@ class Server:
 
     def cmd(self, command):
         try:
+            print(command)
             subprocess.check_call(self.get_command(command), shell=True)
         except subprocess.CalledProcessError as e:
             return e.returncode
