@@ -159,8 +159,8 @@ class RemoteBuilder:
                               os.getcwd(),
                               os.path.join(self.get_conan_home(), '.conan'))
 
-        self.remote = BuildEnv(os.path.join(self.config.REMOTE_DIR, self.local.source_dir),
-                               os.path.join(self.config.REMOTE_DIR, self.local.build_dir),
+        self.remote = BuildEnv(self.config.REMOTE_DIR + self.local.source_dir,
+                               self.config.REMOTE_DIR + self.local.build_dir,
                                os.path.join(self.get_remote_conan_home(), '.conan'))
         print("remote: " + self.remote.source_dir + "   " + self.remote.build_dir)
 
