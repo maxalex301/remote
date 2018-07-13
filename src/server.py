@@ -28,7 +28,7 @@ class Server:
     def remote_dir(self, dir):
         return '{host}:{dir}'.format(host=self.__host_str(), dir=dir)
 
-    def sync(self, source, dest, exclude):
+    def sync(self, source, dest, exclude, deleteFolderContent=True):
         cmd = (
             'rsync -trvlH'
             ' -e "ssh{port}"'
