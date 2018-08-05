@@ -173,14 +173,16 @@ class RemoteBuilder:
         if self.__is_version_check():
             self.server.cmd(' '.join(escape(self.argv)))
             return
-        elif self.__is_conan() and not 'install' in self.argv and not 'build' in self.argv:
+        elif self.__is_conan() \
+                and not 'install' in self.argv \
+                and not 'build' in self.argv:
             self.server.cmd(' '.join(escape(self.argv)))
             return
 
         self.make_configurations()
 
         if self.__is_conan() and not (os.path.exists(self.local.conanfile_py) or os.path.exists(self.local.conanfile_txt)):
-            raise RuntimeError("conanfile.* does not exists in source directory")
+            raise RuntimeError("conanfile.py or conanfile.txt does not exists in source directory")
         elif self.__is_cmake() and not os.path.exists(self.local.cmake_lists):
             raise RuntimeError("CMakeLists.txt does not exists in source directory " + self.local.cmake_lists)
 
