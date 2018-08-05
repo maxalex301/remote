@@ -14,6 +14,41 @@ class BuildEnv:
         self.conanfile_txt = os.path.join(self.source_dir, 'conanfile.txt')
         self.project_cbp = os.path.join(self.build_dir, self.project+'.cbp')
 
+class CMakeCommandBuilder:
+    ninja_build_dir=None
+
+    def __init__(self, source_dir, build_dir, config):
+        self.source_dir = source_dir
+        self.build_dir = build_dir
+        self.config = config
+
+    def __is_ninja_build(self):
+        return self.config.NINJA is not None and self.config.NINJA
+
+    def generate(self):
+        command = ['cmake', '-G']
+        command.append('Ninja' if self.__is_ninja_build() else 'Unix Makefiles')
+        command.append(self.source_dir)
+        command.append('-DCMAKE_C_COMPILER_LAUNCHER=' + self.config.COMPILER_LAUNCHER)
+        command.append('-DCMAKE_CXX_COMPILER_LAUNCHER=' + self.config.COMPILER_LAUNCHER)
+        command.append('-DCMAKE_C_COMPILER=' + self.config.CC)
+        command.append('-DCMAKE_CXX_COMPILER=' + self.config.CXX)
+        command.append('-DCMAKE_MAKE_PROGRAM=' + self.config.NINJA if self.__is_ninja_build() else '/usr/bin/make')
+        print('Generate command: ' + command)
+        return command
+
+    def build(self):
+        command = ['cmake', '--build', self.build_dir]
+        print('Build command: ' + command)
+        return command
+
+    def install(self):
+        command = self.build()
+        command.append('--target')
+        command.append('install')
+        print('Install command: ' + command)
+        return command
+
 class RemoteBuilder:
     def __init__(self, config):
         self.__need_upload = True
@@ -47,6 +82,13 @@ class RemoteBuilder:
 
     def __is_make(self):
         return self.command == 'make'
+
+    def __is_toolset_check(self):
+        return self.argv[-1].startswith('/private/') or self.argv[-1].startswith('/tmp/')
+
+    def __is_version_check(self):
+        return '-version' in self.argv or '--version' in self.argv or '-v' in self.argv
+
 
     def set_compiler_args(self):
         self.argv.insert(0, 'CC=' + self.config.CC)
@@ -107,12 +149,6 @@ class RemoteBuilder:
             self.replace_file_variables(self.remote.cmake_cache)
             if self.__is_toolset_check():
                 self.modify_cmake_cache()
-
-    def __is_toolset_check(self):
-        return self.argv[-1].startswith('/private/') or self.argv[-1].startswith('/tmp/')
-
-    def __is_version_check(self):
-        return '-version' in self.argv or '--version' in self.argv or '-v' in self.argv
 
     def get_conan_home(self):
         try:
@@ -181,7 +217,9 @@ class RemoteBuilder:
 
         self.make_configurations()
 
-        if self.__is_conan() and not (os.path.exists(self.local.conanfile_py) or os.path.exists(self.local.conanfile_txt)):
+        if self.__is_conan() \
+                and not (os.path.exists(self.local.conanfile_py) \
+                or os.path.exists(self.local.conanfile_txt)):
             raise RuntimeError("conanfile.py or conanfile.txt does not exists in source directory")
         elif self.__is_cmake() and not os.path.exists(self.local.cmake_lists):
             raise RuntimeError("CMakeLists.txt does not exists in source directory " + self.local.cmake_lists)
