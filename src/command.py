@@ -72,6 +72,26 @@ class Command:
             self.server.download(self.remote.build_dir, self.local.build_dir, ['.ssh'])
 
 
+    def make_configurations(self):
+        src_dir = self.argv[-1]
+        if self.__is_cmake_build():
+            src_dir = os.path.dirname(os.path.abspath(self.argv[2]))
+            self.__need_upload = False
+        elif self.__is_conan():
+            src_dir = self.get_conan_source_dir()
+        elif self.__is_make():
+            src_dir = os.getcwd()
+
+        self.local = BuildEnv(os.path.abspath(src_dir),
+                              os.getcwd(),
+                              os.path.join(self.get_conan_home(), '.conan'))
+
+        self.remote = BuildEnv(self.config.REMOTE_DIR + self.local.source_dir,
+                               self.config.REMOTE_DIR + self.local.build_dir,
+                               os.path.join(self.get_remote_conan_home(), '.conan'))
+        print("remote: " + self.remote.source_dir + "   " + self.remote.build_dir)
+
+
 class CMakeCommandParser(Command):
     def __init__(self):
         self.cmake_lists = os.path.join(self.source_dir, 'CMakeLists.txt')
