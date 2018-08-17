@@ -1,6 +1,16 @@
 import sys
 from server import Server, escape
 
+
+class BuildEnv:
+    def __init__(self, source_dir, build_dir, conan_dir):
+        self.source_dir = source_dir
+        self.build_dir = build_dir
+        self.conan_dir = conan_dir
+        self.project = os.path.basename(self.source_dir)
+        self.project_cbp = os.path.join(self.build_dir, self.project+'.cbp')
+
+
 class Command:
     def __init__(self, config):
         self.config = config
@@ -8,6 +18,8 @@ class Command:
         self.server = Server(self.config.BUILD_HOST,
                              self.config.BUILD_PORT,
                              self.config.BUILD_USER)
+        self.local = None
+        self.remote = None
 
     def is_version_check(self):
         return False
@@ -18,13 +30,36 @@ class Command:
     def check(self):
         return False
 
+    def __build_environment(self):
+        pass
+
+    def execute(self):
+        if self.is_version_check():
+            self.server.cmd(' '.join(escape(self.argv)))
+            return
+
+        self.make_configurations()
+
+        print("Uploading project...")
+        self.upload_project()
+
+        self.set_compiler_args()
+
+        if self.run() != 0:
+            return
+
+        print("Downloading artifacts...")
+        self.download_artifacts()
+
     def run(self):
         return self.server.cmd_in_wd(self.remote.build_dir, ' '.join(escape(self.argv)))
 
-    def upload_project(self):
-        # if not self.__need_upload:
-        #     return
+    def create_remote_directories(self):
+        self.server.mkdir(self.remote.source_dir)
+        if os.path.exists(self.local.build_dir):
+            self.server.mkdir(self.remote.build_dir)
 
+    def upload_project(self):
         self.create_remote_directories()
 
         excludes = self.config.EXCLUDES
@@ -37,7 +72,6 @@ class Command:
             self.server.download(self.remote.build_dir, self.local.build_dir, ['.ssh'])
 
 
-
 class CMakeCommandParser(Command):
     def __init__(self):
         self.cmake_lists = os.path.join(self.source_dir, 'CMakeLists.txt')
@@ -47,6 +81,8 @@ class CMakeCommandParser(Command):
     def is_your():
         return sys.argv[0] == 'cmake'
 
+    def __build_configuration(self):
+        pass
 
     def __is_build(self):
         return '--build' in self.argv
@@ -75,12 +111,10 @@ class CMakeCommandParser(Command):
                                          '=' + self.remote.source_dir,
                                          '=' + self.local.source_dir)
 
-    def check(self):
-        if not os.path.exists(self.local.cmake_lists):
-            raise RuntimeError("CMakeLists.txt does not exists in source directory " + self.local.cmake_lists)
-
 
     def run(self):
+        assert os.path.exists(self.local.cmake_lists), "CMakeLists.txt does not exists in source directory " + self.local.cmake_lists
+
         self.argv[-1] = self.remote.source_dir
         if self.__is_cmake_build():
             self.argv[-1] = self.remote.build_dir
@@ -131,11 +165,14 @@ class ConanCommand(Command):
     def is_your(argv):
         return argv[0] == 'conan'
 
+
     def is_version_check(self):
         return '-v' in self.argv or '--version' in self.argv
 
+
     def run(self):
         self.argv[0] = self.config.CONAN
+
 
     def check(self):
         self.conanfile_py = os.path.join(self.source_dir, 'conanfile.py')
@@ -143,6 +180,7 @@ class ConanCommand(Command):
         if not (os.path.exists(self.local.conanfile_py) \
             or os.path.exists(self.local.conanfile_txt)):
             raise RuntimeError("conanfile.py or conanfile.txt does not exists in source directory")
+
 
     def get_conan_home(self):
         try:

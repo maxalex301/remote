@@ -3,5 +3,4 @@ from builder import RemoteBuilder
 from conf import config
 
 if __name__ == '__main__':
-    builder = RemoteBuilder(config)
-    builder.execute()
+    RemoteBuilder(config).execute()
