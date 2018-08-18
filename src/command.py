@@ -1,12 +1,18 @@
-import sys
+import sys, os
 from server import Server, escape
+from pathlib import Path
 
+CMAKE_COMMAND = 'cmake'
+CONAN_COMMAND = 'conan'
+CMAKE_CACHE_TXT = 'CMakeCache.txt'
+CMAKE_LISTS_TXT = 'CMakeLists.txt'
+CONAN_PY = 'conanfile.py'
+CONAN_TXT = 'conanfile.txt'
 
 class BuildEnv:
-    def __init__(self, source_dir, build_dir, conan_dir):
+    def __init__(self, source_dir, build_dir):
         self.source_dir = source_dir
         self.build_dir = build_dir
-        self.conan_dir = conan_dir
         self.project = os.path.basename(self.source_dir)
         self.project_cbp = os.path.join(self.build_dir, self.project+'.cbp')
 
@@ -30,11 +36,9 @@ class Command:
     def check(self):
         return False
 
-    def __build_environment(self):
-        pass
-
     def execute(self):
         if self.is_version_check():
+            self.argv[0] = self.remote_command()
             self.server.cmd(' '.join(escape(self.argv)))
             return
 
@@ -43,7 +47,7 @@ class Command:
         print("Uploading project...")
         self.upload_project()
 
-        self.set_compiler_args()
+        # self.set_compiler_args()
 
         if self.run() != 0:
             return
@@ -51,8 +55,8 @@ class Command:
         print("Downloading artifacts...")
         self.download_artifacts()
 
-    def run(self):
-        return self.server.cmd_in_wd(self.remote.build_dir, ' '.join(escape(self.argv)))
+    def run(self, command = ''):
+        return self.server.cmd_in_wd(self.remote.build_dir, command if command else ' '.join(escape(self.argv)))
 
     def create_remote_directories(self):
         self.server.mkdir(self.remote.source_dir)
@@ -72,34 +76,16 @@ class Command:
             self.server.download(self.remote.build_dir, self.local.build_dir, ['.ssh'])
 
 
-    def make_configurations(self):
-        src_dir = self.argv[-1]
-        if self.__is_cmake_build():
-            src_dir = os.path.dirname(os.path.abspath(self.argv[2]))
-            self.__need_upload = False
-        elif self.__is_conan():
-            src_dir = self.get_conan_source_dir()
-        elif self.__is_make():
-            src_dir = os.getcwd()
-
-        self.local = BuildEnv(os.path.abspath(src_dir),
-                              os.getcwd(),
-                              os.path.join(self.get_conan_home(), '.conan'))
-
-        self.remote = BuildEnv(self.config.REMOTE_DIR + self.local.source_dir,
-                               self.config.REMOTE_DIR + self.local.build_dir,
-                               os.path.join(self.get_remote_conan_home(), '.conan'))
-        print("remote: " + self.remote.source_dir + "   " + self.remote.build_dir)
-
-
-class CMakeCommandParser(Command):
-    def __init__(self):
-        self.cmake_lists = os.path.join(self.source_dir, 'CMakeLists.txt')
-        self.cmake_cache = os.path.join(self.build_dir, 'CMakeCache.txt')
+class CMakeCommand(Command):
+    def __init__(self, config):
+        super(CMakeCommand, self).__init__(config)
 
     @staticmethod
     def is_your():
-        return sys.argv[0] == 'cmake'
+        return Path(sys.argv[0]).name == CMAKE_COMMAND
+
+    def remote_command(self):
+        return self.config.CMAKE
 
     def __build_configuration(self):
         pass
@@ -132,18 +118,43 @@ class CMakeCommandParser(Command):
                                          '=' + self.local.source_dir)
 
 
+    def make_configurations(self):
+        src_dir = self.argv[-1]
+        if self.__is_build():
+            src_dir = os.path.dirname(os.path.abspath(self.argv[2]))
+            self.__need_upload = False
+
+        self.local = BuildEnv(os.path.abspath(src_dir), os.getcwd())
+
+        self.remote = BuildEnv(self.config.REMOTE_DIR + self.local.source_dir,
+                               self.config.REMOTE_DIR + self.local.build_dir)
+
+        self.local.cmake_lists = Path(self.local.source_dir) / CMAKE_LISTS_TXT
+        self.local.cmake_cache = Path(self.local.build_dir) / CMAKE_CACHE_TXT
+        self.remote.cmake_cache = Path(self.remote.build_dir) / CMAKE_CACHE_TXT
+
+        print("remote: " + self.remote.source_dir + "   " + self.remote.build_dir)
+
+
+    def __run_build(self):
+        self.remote.build_dir = Path('/tmp') / self.local.project / 'build'
+        self.server.mkdir(str(self.remote.build_dir))
+        super(CMakeCommand, self).run(command = self.__build_command())
+
+
     def run(self):
         assert os.path.exists(self.local.cmake_lists), "CMakeLists.txt does not exists in source directory " + self.local.cmake_lists
 
-        self.argv[-1] = self.remote.source_dir
-        if self.__is_cmake_build():
-            self.argv[-1] = self.remote.build_dir
-
-        self.argv[0] = self.config.CMAKE
-
-        self.replace_file_variables(self.remote.cmake_cache)
+        if self.__is_build():
+            self.__run_build()
+            return
+        else:
+            self.argv[-1] = self.remote.source_dir
+            self.argv[0] = self.config.CMAKE
+            super(CMakeCommand, self).run()
 
         if self.__is_toolset_check():
+            self.replace_file_variables(self.remote.cmake_cache)
             self.modify_cmake_cache()
             self.server.rm(self.remote.build_dir)
             self.server.rm(self.remote.source_dir)
@@ -151,30 +162,28 @@ class CMakeCommandParser(Command):
     def __is_ninja_build(self):
         return self.config.NINJA is not None and self.config.NINJA
 
-    def __command_str(self, command):
-        return ' '.join(command)
-
     def __generate(self):
         command = [self.config.CMAKE, '-G', \
                    'Ninja' if self.__is_ninja_build() else 'Unix Makefiles', \
-                   self.source_dir, \
-                   '-DCMAKE_C_COMPILER_LAUNCHER=' + self.config.COMPILER_LAUNCHER, \
-                   '-DCMAKE_CXX_COMPILER_LAUNCHER=' + self.config.COMPILER_LAUNCHER, \
+                   self.remote.source_dir, \
                    '-DCMAKE_C_COMPILER=' + self.config.CC, \
                    '-DCMAKE_CXX_COMPILER=' + self.config.CXX, \
                    '-DCMAKE_MAKE_PROGRAM=' + self.config.NINJA if self.__is_ninja_build() else self.config.MAKE
                    ]
-        return self.__command_str(command)
+        if self.config.COMPILER_LAUNCHER:
+            command.append('-DCMAKE_C_COMPILER_LAUNCHER=' + self.config.COMPILER_LAUNCHER)
+            command.append('-DCMAKE_CXX_COMPILER_LAUNCHER=' + self.config.COMPILER_LAUNCHER)
+        return ' '.join(command)
 
     def __build(self):
-        command = [self.config.CMAKE, '--build', self.build_dir]
-        return self.__command_str(command)
+        command = [self.config.CMAKE, '--build', str(self.remote.build_dir)]
+        return ' '.join(command)
 
     def __install(self):
         command = self.__build()
         command.append('--target')
         command.append('install')
-        return self.__command_str(command)
+        return ' '.join(command)
 
     def __build_command(self):
         return '{gen} && {build} && {install}'.format(gen=self.__generate(), build=self.__build(), install=self.__generate())
@@ -182,9 +191,11 @@ class CMakeCommandParser(Command):
 
 class ConanCommand(Command):
     @staticmethod
-    def is_your(argv):
-        return argv[0] == 'conan'
+    def is_your():
+        return Path(sys.argv[0]).name == CONAN_COMMAND
 
+    def remote_command(self):
+        return self.config.CONAN
 
     def is_version_check(self):
         return '-v' in self.argv or '--version' in self.argv
@@ -208,15 +219,27 @@ class ConanCommand(Command):
         except:
             return os.environ['HOME']
 
+    def make_configurations(self):
+        src_dir = self.get_conan_source_dir()
 
-    def get_remote_conan_home(self):
+        self.local = BuildEnv(os.path.abspath(src_dir), os.getcwd())
+        self.local.conan_dir = os.path.join(self.get_home(), '.conan')
+
+
+        self.remote = BuildEnv(self.config.REMOTE_DIR + self.local.source_dir,
+                               self.config.REMOTE_DIR + self.local.build_dir)
+        self.remote.conan_dir = os.path.join(self.get_remote_home(), '.conan')
+        print("remote: " + self.remote.source_dir + "   " + self.remote.build_dir)
+
+
+    def get_remote_home(self):
         conan_home = self.server.getenv('CONAN_USER_HOME').decode("utf-8")
         if not conan_home or conan_home is None:
             return self.server.getenv('HOME').decode("utf-8")
         return conan_home
 
 
-    def get_conan_source_dir(self):
+    def get_source_dir(self):
         skip_next=False
         for arg in self.argv[2:]:
             if skip_next:
