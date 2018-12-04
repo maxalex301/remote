@@ -8,12 +8,12 @@ LABEL maintainer="maxalex"
 # Download the latest version of Clang (official binary) for Ubuntu
 # Extract the archive and add Clang to the PATH
 RUN apt update -qq \
-  && DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends xz-utils build-essential ca-certificates curl \
+  && DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends xz-utils unzip build-essential ca-certificates curl \
   && rm -rf /var/lib/apt/lists/* \
-  && curl -C - -o /root/cmake.sh https://github.com/Kitware/CMake/releases/download/v3.13.1/cmake-3.13.1-Linux-x86_64.sh \
-  && curl -C - -o /root/ninja.zip https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip \
+  && curl -SL https://github.com/Kitware/CMake/releases/download/v3.13.1/cmake-3.13.1-Linux-x86_64.tar.gz | tar -xzC /usr --strip-components=1 \
+  && curl -SL https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip | unzip - -d /root/ninja \
   && curl -C - -SL http://releases.llvm.org/7.0.0/clang+llvm-7.0.0-x86_64-linux-gnu-ubuntu-16.04.tar.xz \
-  | tar -xJC . \
+  | tar -xJC /usr \
   && mv clang+llvm-7.0.0-x86_64-linux-gnu-ubuntu-16.04 clang_7.0.0 \
   && echo 'export PATH=/clang_7.0.0/bin:$PATH' >> ~/.bashrc \
   && echo 'export LD_LIBRARY_PATH=/clang_7.0.0/lib:LD_LIBRARY_PATH' >> ~/.bashrc
