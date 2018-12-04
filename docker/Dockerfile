@@ -18,9 +18,6 @@ RUN apt update -qq \
   && echo 'export PATH=/clang_7.0.0/bin:$PATH' >> ~/.bashrc \
   && echo 'export LD_LIBRARY_PATH=/clang_7.0.0/lib:LD_LIBRARY_PATH' >> ~/.bashrc
 
-RUN \
-  chmod +x /root/cmake.sh
-
 ENV \
     CC="/usr/bin/clang" \
     CXX="/usr/bin/clang++"
