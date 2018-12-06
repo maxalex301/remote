@@ -19,7 +19,7 @@ builder: base clang-cmake-conan/Dockerfile
 	$(DOC_TAG) clang-cmake-conan $(DOCKER_ID_USER)/clang-cmake-conan
 
 client: builder clang-client/Dockerfile
-	$(DOC_BUILD) clang-client/
+	$(DOC_BUILD) -t clang-client clang-client/
 	$(DOC_TAG) clang-client $(DOCKER_ID_USER)/clang-client
 
 push:
