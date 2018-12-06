@@ -1,32 +1,41 @@
 DOCKER_ID_USER=maxalex
+DOC_BUILD=docker build --force-rm=true
+DOC_TAG=docker tag
+DOC_PUSH=docker push
 
-all:
-	$(MAKE) base
-	$(MAKE) server
-	$(MAKE) client
+@all:
+	$(MAKE) clang
+	$(MAKE) clang-server
+	$(MAKE) clang-cmake-conan
+	$(MAKE) clang-client
 
-base:
-	docker build -t clang-base --force-rm=true clang-base/
-	docker tag clang-base ${DOCKER_ID_USER}/clang-base
+base: clang/Dockerfile
+	docker build --force-rm=true -t clang clang/
+	docker tag clang $(DOCKER_ID_USER)/clang
 
-server:
-	docker build -t build-server --force-rm=true build-server/
-	docker tag build-server ${DOCKER_ID_USER}/build-server
+server: clang-server/Dockerfile
+	$(DOC_BUILD) -t clang-server clang-server/
+	$(DOC_TAG) clang-server $(DOCKER_ID_USER)/clang-server
 
-client:
-	docker build -t build-client --force-rm=true build-client/
-	docker tag build-client ${DOCKER_ID_USER}/build-client
+builder: clang-cmake-conan/Dockerfile
+	$(DOC_BUILD) -t clang-cmake-conan clang-cmake-conan/
+	$(DOC_TAG) clang-cmake-conan $(DOCKER_ID_USER)/clang-cmake-conan
+
+client: clang-client/Dockerfile
+	$(DOC_BUILD) $@/
+	$(DOC_TAG) $@ $(DOCKER_ID_USER)/$@
 
 push:
-	docker push ${DOCKER_ID_USER}/clang-base
-	docker push ${DOCKER_ID_USER}/build-server
-	docker push ${DOCKER_ID_USER}/build-client
+	$(DOC_PUSH) $(DOCKER_ID_USER)/clang
+	$(DOC_PUSH) $(DOCKER_ID_USER)/clang-server
+	$(DOC_PUSH) $(DOCKER_ID_USER)/clang-cmake-conan
+	$(DOC_PUSH) $(DOCKER_ID_USER)/clang-client
 
 run-client:
-	docker run -d --rm --name builder -p 2222:22 ${DOCKER_ID_USER}/build-client
+	docker run -d --rm --name builder -p 2222:22 $(DOCKER_ID_USER)/build-client
 
 stop-client:
 	docker stop builder
 
 run-server:
-	docker run -d --rm --name build-server -p 3692:3692 ${DOCKER_ID_USER}/build-server
+	docker run -d --rm --name build-server -p 3692:3692 $(DOCKER_ID_USER)/build-server

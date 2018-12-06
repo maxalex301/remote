@@ -1,16 +1,11 @@
-FROM clang-base:latest
+FROM clang:latest
 LABEL maintainer="maxalex"
 
 ARG cmake_version=3.13.1
 ARG ninja_version=1.8.2
 
-# Copy public ssh-keys
-COPY entrypoint.sh /root/entrypoint.sh
-
 # Install packages
-RUN apt install -y  --no-install-recommends --no-install-suggests unzip ca-certificates distcc openssh-server python3-pip python3-setuptools rsync \
-    && apt clean \
-    && rm -rf /var/lib/apt/lists
+RUN apt update -qq && apt install -y ${apt_flags} unzip ca-certificates distcc python3-pip python3-setuptools
 
 # Install build tools: cmake, ninja, conan
 RUN curl -SL https://github.com/Kitware/CMake/releases/download/v${cmake_version}/cmake-${cmake_version}-Linux-x86_64.tar.gz | tar -xzC /usr --strip-components=1 \
@@ -20,11 +15,11 @@ RUN curl -SL https://github.com/Kitware/CMake/releases/download/v${cmake_version
     && pip3 install --upgrade pip \
     && pip install conan
 
-# Configure SSH
-RUN mkdir -p /root/.ssh \
-    && mkdir -p /var/run/sshd \
-    && chmod -0700 /root/.ssh \
-    && chmod +x /root/entrypoint.sh
+# Clean apt cache
+RUN apt remove -y unzip xz-utils curl \
+    && apt autoremove -y \
+    && apt clean \
+    && rm -rf /var/lib/apt/lists
 
 # Configure Conan
 RUN conan profile new --detect default \
@@ -37,7 +32,3 @@ RUN conan profile new --detect default \
 ENV CONAN_CMAKE_GENERATOR="Ninja" \
     CONAN_CPU_COUNT=2 \
     CONAN_MAKE_PROGRAM="/usr/bin/ninja"
-
-EXPOSE 22
-
-ENTRYPOINT ["/root/entrypoint.sh"]

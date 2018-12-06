@@ -1,8 +1,9 @@
-FROM clang-base:latest
+FROM clang:latest
 LABEL maintainer="maxalex"
 
 COPY entrypoint.sh /root/entrypoint.sh
-RUN apt install -y  --no-install-recommends --no-install-suggests distcc \
+RUN apt update -qq \
+  && apt install ${apt_flags} distcc \
   && apt clean \
   && rm -rf /var/lib/apt/lists \
   && chmod +x /root/entrypoint.sh
