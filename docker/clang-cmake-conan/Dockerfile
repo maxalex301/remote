@@ -5,9 +5,10 @@ ARG cmake_version=3.13.1
 ARG ninja_version=1.8.2
 
 # Install packages
-RUN apt update -qq \
+RUN apt-get update -qq \
+    && apt-get upgrade -y \
     && apt install -y ${apt_flags} unzip ca-certificates distcc python3-pip python3-setuptools \
-    && rm -rf /var/lib/apt/lists \
+    && rm -rf /var/lib/apt/lists
 
 # Install build tools: cmake, ninja, conan
 RUN curl -SL https://github.com/Kitware/CMake/releases/download/v${cmake_version}/cmake-${cmake_version}-Linux-x86_64.tar.gz | tar -xzC /usr --strip-components=1 \
