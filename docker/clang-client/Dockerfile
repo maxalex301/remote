@@ -5,9 +5,8 @@ LABEL maintainer="maxalex"
 COPY entrypoint.sh /root/entrypoint.sh
 
 # Install packages
-RUN apt update -qq \
-    && apt install ${apt_flags} openssh-server rsync \
-    && apt clean \
+RUN apt-get update -qq \
+    && apt-get install ${apt_flags} openssh-server rsync \
     && rm -rf /var/lib/apt/lists \
     && mkdir -p /root/.ssh \
     && mkdir -p /var/run/sshd \
