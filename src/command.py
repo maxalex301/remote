@@ -80,7 +80,7 @@ class Command:
 
     def download_artifacts(self):
         if self.local.build_dir.exists():
-            self.server.download(str(self.remote.build_dir), str(self.local.build_dir), ['.ssh'])
+            self.server.download(str(self.remote.build_dir), str(self.local.build_dir), ['.ssh', '__pycache__'])
 
 
 class CMakeCommand(Command):
