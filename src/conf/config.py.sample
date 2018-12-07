@@ -1,32 +1,37 @@
-#Exclude directories for upload
-EXCLUDES=['.git', '.idea', '.gitignore', 'msw', '_build', 'cmake-build-debug', 'cmake-build-release']
+from conf.excludes import *
 
 #Server build directory
-REMOTE_DIR='/tmp/build'
+REMOTE_DIR='/'
 
 #Server conan command
 CONAN='/usr/bin/conan'
 
 #Server cmake command. Must be exists on local machine too!!!
 CMAKE='/usr/bin/cmake'
-
+4
 #Server make command. Must be exists on local machine too!!!
 MAKE='/usr/bin/make'
 
+#Server ninja command. If set used as default build tool!!!
+NINJA='/usr/bin/ninja'
+
 #Server C compiler. Must be exists on local machine too!!!
-CC='/usr/bin/gcc'
+CC='/usr/lib64/ccache/clang'
 
 #Server C++ compiler. Must be exists on local machine too!!!
-CXX='/usr/bin/g++'
+CXX='/usr/lib64/ccache/clang++'
+
+#Compiler launcher. Will transform to CMAKE_C_COMPILER_LAUNCHER and CMAKE_CXX_COMPILER_LAUNCHER
+COMPILER_LAUNCHER='distcc'
 
 #Server Fortran compiler. Uncomment if need it
 #FC='/usr/bin/gfortran'
 
 #SSH user
-#BUILD_USER='root'
+BUILD_USER='root'
 
 #Server address
-BUILD_HOST='127.0.0.1'
+BUILD_HOST='localhost'
 
 #Server ssh-port. Uncomment if not standart
-#BUILD_PORT=22
+BUILD_PORT=2222
