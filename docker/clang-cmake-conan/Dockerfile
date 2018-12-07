@@ -7,7 +7,7 @@ ARG ninja_version=1.8.2
 # Install packages
 RUN apt-get update -qq \
     && apt-get upgrade -y \
-    && apt install -y ${apt_flags} unzip ca-certificates distcc python3-pip python3-setuptools \
+    && apt install -y ${apt_flags} unzip ca-certificates distcc python3-dev python3-pip python3-setuptools \
     && rm -rf /var/lib/apt/lists
 
 # Install build tools: cmake, ninja, conan
