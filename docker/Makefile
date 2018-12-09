@@ -6,33 +6,33 @@ DOC_PUSH=docker push
 @all: build
 build: client server
 
-base: clang/Dockerfile
-	$(DOC_BUILD) -t clang clang/
-	$(DOC_TAG) clang $(DOCKER_ID_USER)/clang
+base: gcc-clang/Dockerfile
+	$(DOC_BUILD) -t gcc-clang gcc-clang/
+	$(DOC_TAG) gcc-clang $(DOCKER_ID_USER)/gcc-clang
 
-server: base clang-server/Dockerfile
-	$(DOC_BUILD) -t clang-server clang-server/
-	$(DOC_TAG) clang-server $(DOCKER_ID_USER)/clang-server
+server: base build-server/Dockerfile
+	$(DOC_BUILD) -t build-server build-server/
+	$(DOC_TAG) build-server $(DOCKER_ID_USER)/build-server
 
-builder: base clang-cmake-conan/Dockerfile
-	$(DOC_BUILD) -t clang-cmake-conan clang-cmake-conan/
-	$(DOC_TAG) clang-cmake-conan $(DOCKER_ID_USER)/clang-cmake-conan
+builder: base gcc-clang-cmake-conan/Dockerfile
+	$(DOC_BUILD) -t gcc-clang-cmake-conan gcc-clang-cmake-conan/
+	$(DOC_TAG) gcc-clang-cmake-conan $(DOCKER_ID_USER)/gcc-clang-cmake-conan
 
-client: builder clang-client/Dockerfile
-	$(DOC_BUILD) -t clang-client clang-client/
-	$(DOC_TAG) clang-client $(DOCKER_ID_USER)/clang-client
+client: builder build-client/Dockerfile
+	$(DOC_BUILD) -t build-client build-client/
+	$(DOC_TAG) build-client $(DOCKER_ID_USER)/build-client
 
 push:
-	$(DOC_PUSH) $(DOCKER_ID_USER)/clang
-	$(DOC_PUSH) $(DOCKER_ID_USER)/clang-server
-	$(DOC_PUSH) $(DOCKER_ID_USER)/clang-cmake-conan
-	$(DOC_PUSH) $(DOCKER_ID_USER)/clang-client
+	$(DOC_PUSH) $(DOCKER_ID_USER)/gcc-clang
+	$(DOC_PUSH) $(DOCKER_ID_USER)/build-server
+	$(DOC_PUSH) $(DOCKER_ID_USER)/gcc-clang-cmake-conan
+	$(DOC_PUSH) $(DOCKER_ID_USER)/build-client
 
 run-client:
-	docker run -d --rm --name builder -p 2222:22 $(DOCKER_ID_USER)/build-client
+	docker run -d --rm --name build-client -p 2222:22 $(DOCKER_ID_USER)/build-client
 
 stop-client:
-	docker stop builder
+	docker stop build-client
 
 run-server:
 	docker run -d --rm --name build-server -p 3692:3692 $(DOCKER_ID_USER)/build-server

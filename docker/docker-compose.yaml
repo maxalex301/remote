@@ -1,20 +1,23 @@
 version: "3"
 
 services:
-  client:
-    container_name: clang-client
+  build-client:
+    container_name: build-client
     build:
-      context: clang-client/
+      context: build-client/
     restart: always
     ports:
       - "2222:22"
     environment:
       - PUBLIC_KEY=ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILuZdFNd5f8bgnvulkksxlT5209PNTHur+ukBsDs5quN maxalex301@gmail.com
+      - CC=/usr/local/bin/clang
+      - CXX=/usr/local/bin/clang++
+      - FC=/usr/local/bin/gfortran
 
-  server:
-    container_name: clang-server
+  build-server:
+    container_name: build-server
     build:
-      context: clang-server/
+      context: build-server/
     environment:
       - NETWORK=10.0.0.1/16
       - JOBS=3
