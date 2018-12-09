@@ -1,11 +1,11 @@
 #!/bin/sh
 mkdir -p bin
-cd bin
-ln -sf ../src/cmd.py conan
-ln -sf ../src/cmd.py cmake
-ln -sf ../src/cmd.py make
-chmod 555 conan
-chmod 555 cmake
-chmod 555 make
-export PATH=$(pwd):$PATH
-cd ../
+PYTHON3_PATH=$(which python3)
+sed -e s#/usr/bin/python3#${PYTHON3_PATH}#g src/cmd.py.tmpl > src/cmd.py
+ln -sf src/cmd.py bin/conan
+ln -sf src/cmd.py bin/cmake
+ln -sf src/cmd.py bin/make
+chmod 555 bin/conan
+chmod 555 bin/cmake
+chmod 555 bin/make
+export PATH=$(pwd)/bin:$PATH
