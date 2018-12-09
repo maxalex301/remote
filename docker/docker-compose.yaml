@@ -7,7 +7,7 @@ services:
       context: build-client/
     restart: always
     ports:
-      - "2222:22"
+      - "22222:22"
     environment:
       - PUBLIC_KEY=ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILuZdFNd5f8bgnvulkksxlT5209PNTHur+ukBsDs5quN maxalex301@gmail.com
       - CC=/usr/local/bin/clang
