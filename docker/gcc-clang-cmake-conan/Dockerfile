@@ -1,25 +1,25 @@
 FROM maxalex/gcc-clang:latest
 LABEL maintainer="maxalex"
 
-ARG cmake_version=3.13.1
-ARG ninja_version=1.8.2
+ARG cmake_version=3.13.2
+ARG cmake_url=https://github.com/Kitware/CMake/releases/download/v${cmake_version}/cmake-${cmake_version}-Linux-x86_64.tar.gz
+ARG ninja_url=https://github.com/Kitware/ninja/releases/download/v1.8.2.g81279.kitware.dyndep-1.jobserver-1/ninja-1.8.2.g81279.kitware.dyndep-1.jobserver-1_x86_64-linux-gnu.tar.gz
 
 # Install packages
 RUN apt-get update -qq \
     && apt-get upgrade -y \
-    && apt-get install ${apt_flags} unzip ca-certificates distcc python3-dev python3-pip python3-setuptools
+    && apt remove -y python2.7 python2.7-minimal \
+    && apt-get install ${apt_flags} ca-certificates distcc python3-dev python3-pip python3-setuptools \
+    && update-alternatives --install /usr/bin/python python /usr/bin/python3 10
 
 # Install build tools: cmake, ninja, conan
-RUN curl -SL https://github.com/Kitware/CMake/releases/download/v${cmake_version}/cmake-${cmake_version}-Linux-x86_64.tar.gz | tar -xzC /usr/local --strip-components=1 \
-    && ldconfig /usr/local/lib \
-    && curl -L -o /tmp/ninja-linux.zip https://github.com/ninja-build/ninja/releases/download/v${ninja_version}/ninja-linux.zip \
-    && unzip /tmp/ninja-linux.zip -d /usr/local/bin \
-    && rm -f /tmp/ninja-linux.zip \
+RUN curl -SL ${cmake_url} | tar -xzC /usr/local --strip-components=1 \
+    && curl -SL ${ninja_url} | tar -xzC /usr/local/bin --strip-components=1 \
     && pip3 install --upgrade pip \
     && pip install conan
 
 # Clean apt cache
-RUN apt remove -y unzip xz-utils curl \
+RUN apt remove -y xz-utils curl \
     && apt autoremove -y \
     && apt clean \
     && rm -rf /var/lib/apt/lists

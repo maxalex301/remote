@@ -14,6 +14,7 @@ MAKE='/usr/bin/make'
 
 #Server ninja command. If set used as default build tool!!!
 NINJA='/usr/bin/ninja'
+NINJA_FLAGS='-j3'
 
 #Server C compiler. Must be exists on local machine too!!!
 CC='/usr/lib64/ccache/clang'

@@ -201,11 +201,20 @@ class CMakeCommand(Command):
 
         return command
 
-    def __build(self):
-        return [self.config.CMAKE, '--build', str(self.remote.build_dir)]
+    def __build(self, target=''):
+        build_cmd = [self.config.CMAKE, '--build', str(self.remote.build_dir)]
+        if target:
+            build_cmd.append('--target')
+            build_cmd.append(target)
+
+        if self.config.NINJA_FLAGS is not None:
+            build_cmd.append('--')
+            build_cmd.append(self.config.NINJA_FLAGS)
+        print("Build command: {}".format(build_cmd))
+        return build_cmd
 
     def __install(self):
-        return self.__build() + ['--target', 'install']
+        return self.__build(target='install')
 
 
 class ConanCommand(Command):
