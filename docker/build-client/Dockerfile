@@ -1,4 +1,4 @@
-FROM clang-cmake-conan:latest
+FROM maxalex/gcc-clang-cmake-conan:latest
 LABEL maintainer="maxalex"
 
 # Copy public ssh-keys

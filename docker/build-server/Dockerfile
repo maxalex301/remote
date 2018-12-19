@@ -1,4 +1,4 @@
-FROM clang:latest
+FROM maxalex/gcc-clang:latest
 LABEL maintainer="maxalex"
 
 COPY entrypoint.sh /root/entrypoint.sh
