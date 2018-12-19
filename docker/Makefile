@@ -10,15 +10,15 @@ base: clang/Dockerfile
 	$(DOC_BUILD) -t clang clang/
 	$(DOC_TAG) clang $(DOCKER_ID_USER)/clang
 
-server: base clang-server/Dockerfile
+server: clang-server/Dockerfile
 	$(DOC_BUILD) -t clang-server clang-server/
 	$(DOC_TAG) clang-server $(DOCKER_ID_USER)/clang-server
 
-builder: base clang-cmake-conan/Dockerfile
+builder: clang-cmake-conan/Dockerfile
 	$(DOC_BUILD) -t clang-cmake-conan clang-cmake-conan/
 	$(DOC_TAG) clang-cmake-conan $(DOCKER_ID_USER)/clang-cmake-conan
 
-client: builder clang-client/Dockerfile
+client: clang-client/Dockerfile
 	$(DOC_BUILD) -t clang-client clang-client/
 	$(DOC_TAG) clang-client $(DOCKER_ID_USER)/clang-client
 
