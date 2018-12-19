@@ -8,7 +8,7 @@ CONAN='/usr/bin/conan'
 
 #Server cmake command. Must be exists on local machine too!!!
 CMAKE='/usr/bin/cmake'
-4
+
 #Server make command. Must be exists on local machine too!!!
 MAKE='/usr/bin/make'
 
