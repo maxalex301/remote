@@ -1,0 +1,15 @@
+version: "3"
+
+services:
+  build-client:
+    container_name: build-client
+    image: maxalex/build-client
+    restart: always
+    ports:
+      - "22222:22"
+    environment:
+      - PUBLIC_KEY=ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILuZdFNd5f8bgnvulkksxlT5209PNTHur+ukBsDs5quN maxalex301@gmail.com
+      - HOSTS=""
+      - CC=/usr/local/bin/clang
+      - CXX=/usr/local/bin/clang++
+      - FC=/usr/local/bin/gfortran
