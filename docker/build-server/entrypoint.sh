@@ -1,8 +1,8 @@
 #!/bin/bash -e
-if [ -z "$NETWORK" ]; then
-    net=10.0.0.1/16
+if [ -z "$ALLOW" ]; then
+    allow="--allow=10.0.0.1/16"
 else
-    net=$NETWORK
+    allow=$ALLOW
 fi
 
 append_params=""
@@ -11,4 +11,4 @@ if [ -n "$JOBS" ]; then
     append_params="$append_params --jobs $JOBS"
 fi
 
-distccd --allow=$net --daemon --verbose --no-detach $append_params
+distccd $net --daemon --verbose --no-detach $append_params
