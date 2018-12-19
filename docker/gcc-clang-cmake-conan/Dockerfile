@@ -11,6 +11,7 @@ RUN apt-get update -qq \
 
 # Install build tools: cmake, ninja, conan
 RUN curl -SL https://github.com/Kitware/CMake/releases/download/v${cmake_version}/cmake-${cmake_version}-Linux-x86_64.tar.gz | tar -xzC /usr/local --strip-components=1 \
+    && ldconfig /usr/local/lib \
     && curl -L -o /tmp/ninja-linux.zip https://github.com/ninja-build/ninja/releases/download/v${ninja_version}/ninja-linux.zip \
     && unzip /tmp/ninja-linux.zip -d /usr/local/bin \
     && rm -f /tmp/ninja-linux.zip \
@@ -24,23 +25,23 @@ RUN apt remove -y unzip xz-utils curl \
     && rm -rf /var/lib/apt/lists
 
 # Configure Conan
-RUN conan profile new --detect clang \
+RUN conan profile new --detect temp \
+    && conan profile update settings.build_type=Release temp \
+    && conan profile update settings.cppstd=17 temp \
+    && conan profile update env.FC=/usr/local/bin/gfortran temp \
+    && cp /root/.conan/profiles/temp /root/.conan/profiles/clang \
+    && cp /root/.conan/profiles/temp /root/.conan/profiles/gcc \
+    && rm -f /root/.conan/profiles/temp \
     && conan profile update env.CC=/usr/local/bin/clang clang \
     && conan profile update env.CXX=/usr/local/bin/clang++ clang \
-    && conan profile update env.FC=/usr/local/bin/gfortran clang \
     && conan profile update settings.compiler=clang clang \
-    && conan profile update settings.compiler.version=7 clang \
+    && conan profile update settings.compiler.version=7.0 clang \
     && conan profile update settings.compiler.libcxx=libc++ clang \
-    && conan profile update settings.build_type=Release clang \
-    && conan profile update settings.cppstd=17 clang \
-    && conan profile new --detect gcc \
     && conan profile update env.CC=/usr/local/bin/gcc gcc \
     && conan profile update env.CXX=/usr/local/bin/g++ gcc \
-    && conan profile update env.FC=/usr/local/bin/gfortran gcc \
-    && conan profile update settings.compiler=gcc clang \
-    && conan profile update settings.compiler.version=8 clang \
-    && conan profile update settings.build_type=Release gcc \
-    && conan profile update settings.cppstd=17 gcc \
+    && conan profile update settings.compiler=gcc gcc \
+    && conan profile update settings.compiler.version=8.2 gcc \
+    && conan profile update settings.compiler.libcxx=libstdc++ gcc \
     && ln -s /root/.conan/profiles/clang /root/.conan/profiles/default
 
 # Environment variables
