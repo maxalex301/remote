@@ -5,8 +5,8 @@ services:
     container_name: build-server
     image: maxalex/build-server
     environment:
-      - ALLOW="--allow=10.0.0.1/16"
+      - ALLOW="-a 10.100.0.1/24 -a 192.168.101.0/24"
       - JOBS=3
     ports:
-      - "3632:3632"
+      - "3692:3692"
     user: distccd
