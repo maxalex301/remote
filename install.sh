@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 function add_binary {
     ln -sf ../src/cmd.py $1
     chmod 555 $1
