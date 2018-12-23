@@ -73,7 +73,8 @@ class Server:
             return e.returncode
         return 0
 
-    def cmd_in_wd(self, wd, command):
-        return self.cmd('cd {wd}; {cmd}'.format(wd=wd, cmd=command))
+    def cmd_in_wd(self, env, wd, command):
+        env_vars=['{key}={val}'.format(key=key, val=value) for key, value in env.items()]
+        return self.cmd('{env} cd {wd}; {cmd}'.format(env=' '.join(env_vars), wd=wd, cmd=command))
 
 

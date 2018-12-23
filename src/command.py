@@ -26,6 +26,7 @@ class Command:
     def __init__(self, config):
         self.config = config
         self.argv = sys.argv
+        self.env = dict()
         self.server = Server(self.config.BUILD_HOST,
                              self.config.BUILD_PORT,
                              self.config.BUILD_USER)
@@ -63,7 +64,7 @@ class Command:
             self.server.rm(str(self.remote.source_dir))
 
     def run(self, command = ''):
-        return self.server.cmd_in_wd(str(self.remote.build_dir), command if command else ' '.join(escape(self.argv)))
+        return self.server.cmd_in_wd(self.env, str(self.remote.build_dir), command if command else ' '.join(escape(self.argv)))
 
     def create_remote_directories(self):
         self.server.mkdir(str(self.remote.source_dir))
