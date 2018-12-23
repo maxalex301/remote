@@ -11,6 +11,7 @@ CONAN_HOME = '.conan'
 CONAN_PY = 'conanfile.py'
 CONAN_TXT = 'conanfile.txt'
 CONAN_BUILD_INFO = 'conanbuildinfo.cmake'
+CONAN_INFO_TXT = 'conaninfo.txt'
 NINJA_BUILD_DIR = 'cmake-build-ninja'
 EXIT_SUCCESS = 0
 
@@ -60,7 +61,7 @@ class Command:
 
         if self.need_clear_remote:
             print("Clear remote directories")
-            self.server.rm(str(self.remote.build_dir))
+            self.server.rm(str(s/usr/local/bin/elf.remote.build_dir))
             self.server.rm(str(self.remote.source_dir))
 
     def run(self, command = ''):
@@ -189,6 +190,7 @@ class CMakeCommand(Command):
             command += ['&&', 'mkdir', '-p', str(self.remote.ninja_dir), \
                         '&&', 'cd', str(self.remote.ninja_dir), \
                         '&&', 'cp', str(self.remote.build_dir / CONAN_BUILD_INFO), str(self.remote.ninja_dir), \
+                        '&&', 'cp', str(self.remote.build_dir / CONAN_INFO_TXT), str(self.remote.ninja_dir), \
                         '&&', self.config.CMAKE, '-G', 'Ninja', \
                        '-DCMAKE_CXX_COMPILER=' + self.config.CXX, \
                        '-DCMAKE_MAKE_PROGRAM=' + self.config.NINJA
@@ -254,10 +256,10 @@ class ConanCommand(Command):
         print("remote: " + str(self.remote.source_dir) + "   " + str(self.remote.build_dir))
 
     def get_remote_home(self):
-        conan_home = self.server.getenv('CONAN_USER_HOME').decode("utf-8")
-        if not conan_home or conan_home is None:
+        # conan_home = self.server.getenv('CONAN_USER_HOME').decode("utf-8")
+        # if not conan_home or conan_home is None:
             return Path().home()
-        return Path(conan_home).resolve()
+        # return Path(conan_home).resolve()
 
     def __arg_generator(self):
         i=2

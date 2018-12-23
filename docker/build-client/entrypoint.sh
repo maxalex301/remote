@@ -6,4 +6,6 @@ else
     echo $PUBLIC_KEY > /root/.ssh/authorized_keys
 fi
 
+echo $DISTCC_HOSTS >> /root/.distcc/hosts
+
 /usr/sbin/sshd -D $SSHD_PARAMS

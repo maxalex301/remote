@@ -58,6 +58,12 @@ RUN cd ${distcc_dir} \
     && make install \
     && rm -rf ${ccache_dir}
 
+RUN mkdir -p /usr/local/ccache \
+    && ln -s /usr/local/bin/ccache /usr/local/ccache/clang \
+    && ln -s /usr/local/bin/ccache /usr/local/ccache/clang++ \
+    && ln -s /usr/local/bin/ccache /usr/local/ccache/gcc \
+    && ln -s /usr/local/bin/ccache /usr/local/ccache/g++ \
+    && ln -s /usr/local/bin/ccache /usr/local/ccache/gfortran
 
 # Configure Conan
 RUN pip install -q --no-cache-dir conan \

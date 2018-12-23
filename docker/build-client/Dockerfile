@@ -8,6 +8,7 @@ COPY entrypoint.sh /root/entrypoint.sh
 RUN apt-get update -qq \
     && apt-get install ${apt_flags} openssh-server rsync \
     && rm -rf /var/lib/apt/lists \
+    && mkdir -p /root/.distcc \
     && mkdir -p /root/.ssh \
     && mkdir -p /var/run/sshd \
     && chmod -0700 /root/.ssh \
